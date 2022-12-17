@@ -1,73 +1,47 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'dart:async';
+
+import 'package:cosinuss_lib/data_model/accelerometer.dart';
+import 'package:cosinuss_lib/data_model/body_temperature.dart';
+import 'package:cosinuss_lib/data_model/cosinuss_data.dart';
+import 'package:cosinuss_lib/data_model/heart_rate.dart';
+import 'package:cosinuss_lib/data_model/ppg_raw.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'dart:typed_data';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-      ),
-      home: const MyHomePage(title: 'Cosinuss° One - Demo'),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  String _connectionStatus = "Disconnected";
-  String _heartRate = "- bpm";
-  String _bodyTemperature = '- °C';
-
-  String _accX = "-";
-  String _accY = "-";
-  String _accZ = "-";
-
-  String _ppgGreen = "-";
-  String _ppgRed = "-";
-  String _ppgAmbient = "-";
-
+class CosinussSensor {
   bool _isConnected = false;
 
-  bool earConnectFound = false;
+  bool _earConnectFound = false;
 
-  void updateHeartRate(rawData) {
+  Accelerometer? _accelerometer;
+  BodyTemperature? _bodyTemperature;
+  HeartRate? _heartRate;
+  PPGRaw? _ppgRaw;
+
+  static final CosinussSensor _singleton = CosinussSensor._internal();
+
+  factory CosinussSensor() {
+    return _singleton;
+  }
+
+  CosinussSensor._internal();
+
+  static CosinussSensor get instance {
+    return _singleton;
+  }
+
+  final StreamController<CosinussData> _streamController =
+      StreamController.broadcast();
+
+  Stream<CosinussData> get stream {
+    return _streamController.stream;
+  }
+
+  bool get isConnected {
+    return _isConnected;
+  }
+
+  HeartRate _getHeartRate(rawData) {
     Uint8List bytes = Uint8List.fromList(rawData);
 
     // based on GATT standard
@@ -76,21 +50,14 @@ class _MyHomePageState extends State<MyHomePage> {
       bpm = (((bpm >> 8) & 0xFF) | ((bpm << 8) & 0xFF00));
     }
 
-    var bpmLabel = "- bpm";
-    if (bpm != 0) {
-      bpmLabel = "$bpm bpm";
-    }
-
-    setState(() {
-      _heartRate = bpmLabel;
-    });
+    return HeartRate(value: bpm);
   }
 
-  void updateBodyTemperature(rawData) {
+  BodyTemperature _getBodyTemperature(rawData) {
     var flag = rawData[0];
 
     // based on GATT standard
-    double temperature = twosComplimentOfNegativeMantissa(
+    double temperature = _twosComplimentOfNegativeMantissa(
             ((rawData[3] << 16) | (rawData[2] << 8) | rawData[1]) & 16777215) /
         100.0;
     if ((flag & 1) != 0) {
@@ -98,13 +65,10 @@ class _MyHomePageState extends State<MyHomePage> {
           (5.0 / 9.0); // convert Fahrenheit to Celsius
     }
 
-    setState(() {
-      _bodyTemperature =
-          "$temperature °C"; // todo update body temp
-    });
+    return BodyTemperature(value: temperature);
   }
 
-  void updatePPGRaw(rawData) {
+  PPGRaw _getPPGRaw(rawData) {
     Uint8List bytes = Uint8List.fromList(rawData);
 
     // corresponds to the raw reading of the PPG sensor from which the heart rate is computed
@@ -127,14 +91,11 @@ class _MyHomePageState extends State<MyHomePage> {
         bytes[11] <<
             32; // ambient light sensor (e.g., if sensor is not placed correctly)
 
-    setState(() {
-      _ppgGreen = "$ppgRed (unknown unit)";
-      _ppgRed = "$ppgGreen (unknown unit)";
-      _ppgAmbient = "$ppgGreenAmbient (unknown unit)";
-    });
+    return PPGRaw(
+        ppgRed: ppgRed, ppgGreen: ppgGreen, ppgAmbient: ppgGreenAmbient);
   }
 
-  void updateAccelerometer(rawData) {
+  Accelerometer _getAccelerometer(rawData) {
     Int8List bytes = Int8List.fromList(rawData);
 
     // description based on placing the earable into your right ear canal
@@ -142,14 +103,10 @@ class _MyHomePageState extends State<MyHomePage> {
     int accY = bytes[16];
     int accZ = bytes[18];
 
-    setState(() {
-      _accX = "$accX (unknown unit)";
-      _accY = "$accY (unknown unit)";
-      _accZ = "$accZ (unknown unit)";
-    });
+    return Accelerometer(x: accX, y: accY, z: accZ);
   }
 
-  int twosComplimentOfNegativeMantissa(int mantissa) {
+  int _twosComplimentOfNegativeMantissa(int mantissa) {
     if ((4194304 & mantissa) != 0) {
       return (((mantissa ^ -1) & 16777215) + 1) * -1;
     }
@@ -157,8 +114,30 @@ class _MyHomePageState extends State<MyHomePage> {
     return mantissa;
   }
 
-  void _connect() {
+  void sendCosinussData(StreamSink<CosinussData> sink) {
+    sink.add(CosinussData(
+      connected: _isConnected,
+      accelerometer: _accelerometer,
+      bodyTemperature: _bodyTemperature,
+      heartRate: _heartRate,
+      ppgRaw: _ppgRaw,
+    ));
+  }
+
+  void connect() {
+    if (_isConnected) {
+      return;
+    }
+
     FlutterBluePlus flutterBluePlus = FlutterBluePlus.instance;
+
+    flutterBluePlus.state.listen((event) {
+      if (![BluetoothState.off, BluetoothState.unavailable].contains(event)) {
+        return;
+      }
+      _isConnected = false;
+      sendCosinussData(_streamController.sink);
+    });
 
     // start scanning
     flutterBluePlus.startScan(timeout: const Duration(seconds: 4));
@@ -167,18 +146,16 @@ class _MyHomePageState extends State<MyHomePage> {
     flutterBluePlus.scanResults.listen((results) async {
       // do something with scan results
       for (ScanResult r in results) {
-        if (r.device.name == "earconnect" && !earConnectFound) {
-          earConnectFound =
+        if (r.device.name == "earconnect" && !_earConnectFound) {
+          _earConnectFound =
               true; // avoid multiple connects attempts to same device
 
           await flutterBluePlus.stopScan();
 
           r.device.state.listen((state) {
             // listen for connection state changes
-            setState(() {
-              _isConnected = state == BluetoothDeviceState.connected;
-              _connectionStatus = (_isConnected) ? "Connected" : "Disconnected";
-            });
+            _isConnected = state == BluetoothDeviceState.connected;
+            sendCosinussData(_streamController.sink);
           });
 
           await r.device.connect();
@@ -191,9 +168,6 @@ class _MyHomePageState extends State<MyHomePage> {
               // iterate over characterstics
               switch (characteristic.uuid.toString()) {
                 case "0000a001-1212-efde-1523-785feabcd123":
-                  if (kDebugMode) {
-                    print("Starting sampling ...");
-                  }
                   await characteristic.write([
                     0x32,
                     0x31,
@@ -215,15 +189,20 @@ class _MyHomePageState extends State<MyHomePage> {
                   await Future.delayed(const Duration(
                       seconds:
                           2)); // short delay before next bluetooth operation otherwise BLE crashes
-                  characteristic.value.listen((rawData) =>
-                      {updateAccelerometer(rawData), updatePPGRaw(rawData)});
+                  characteristic.value.listen((rawData) {
+                    _accelerometer = _getAccelerometer(rawData);
+                    _ppgRaw = _getPPGRaw(rawData);
+                    sendCosinussData(_streamController.sink);
+                  });
                   await characteristic.setNotifyValue(true);
                   await Future.delayed(const Duration(seconds: 2));
                   break;
 
                 case "00002a37-0000-1000-8000-00805f9b34fb":
-                  characteristic.value
-                      .listen((rawData) => {updateHeartRate(rawData)});
+                  characteristic.value.listen((rawData) {
+                    _heartRate = _getHeartRate(rawData);
+                    sendCosinussData(_streamController.sink);
+                  });
                   await characteristic.setNotifyValue(true);
                   await Future.delayed(const Duration(
                       seconds:
@@ -231,8 +210,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   break;
 
                 case "00002a1c-0000-1000-8000-00805f9b34fb":
-                  characteristic.value
-                      .listen((rawData) => {updateBodyTemperature(rawData)});
+                  characteristic.value.listen((rawData) {
+                    _bodyTemperature = _getBodyTemperature(rawData);
+                    sendCosinussData(_streamController.sink);
+                  });
                   await characteristic.setNotifyValue(true);
                   await Future.delayed(const Duration(
                       seconds:
@@ -244,85 +225,5 @@ class _MyHomePageState extends State<MyHomePage> {
         }
       }
     });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Row(children: [
-                const Text(
-                  'Status: ',
-                ),
-                Text(_connectionStatus),
-              ]),
-              Row(children: [
-                const Text('Heart Rate: '),
-                Text(_heartRate),
-              ]),
-              Row(children: [
-                const Text('Body Temperature: '),
-                Text(_bodyTemperature),
-              ]),
-              Row(children: [
-                const Text('Accelerometer X: '),
-                Text(_accX),
-              ]),
-              Row(children: [
-                const Text('Accelerometer Y: '),
-                Text(_accY),
-              ]),
-              Row(children: [
-                const Text('Accelerometer Z: '),
-                Text(_accZ),
-              ]),
-              Row(children: [
-                const Text('PPG Raw Red: '),
-                Text(_ppgRed),
-              ]),
-              Row(children: [
-                const Text('PPG Raw Green: '),
-                Text(_ppgGreen),
-              ]),
-              Row(children: [
-                const Text('PPG Ambient: '),
-                Text(_ppgAmbient),
-              ]),
-              Row(children: const [
-                Text(
-                    '\nNote: You have to insert the earbud in your  \n ear in order to receive heart rate values.')
-              ]),
-              Row(children: const [
-                Text(
-                    '\nNote: Accelerometer and PPG have unknown units. \n They were reverse engineered. \n Use with caution!')
-              ]),
-            ],
-          ),
-        ),
-      ),
-      floatingActionButton: Visibility(
-        visible: !_isConnected,
-        child: FloatingActionButton(
-          onPressed: _connect,
-          tooltip: 'Increment',
-          child: const Icon(Icons.bluetooth_searching_sharp),
-        ),
-      ),
-    );
   }
 }
