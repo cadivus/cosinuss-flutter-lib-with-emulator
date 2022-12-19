@@ -1,8 +1,12 @@
+import 'package:json_annotation/json_annotation.dart';
 import 'package:cosinuss_lib/data_model/accelerometer.dart';
 import 'package:cosinuss_lib/data_model/body_temperature.dart';
 import 'package:cosinuss_lib/data_model/heart_rate.dart';
 import 'package:cosinuss_lib/data_model/ppg_raw.dart';
 
+part 'cosinuss_data.g.dart';
+
+@JsonSerializable(explicitToJson: true)
 class CosinussData {
   final bool connected;
   final Accelerometer? accelerometer;
@@ -33,4 +37,9 @@ class CosinussData {
 
   @override
   int get hashCode => toString().hashCode;
+
+  factory CosinussData.fromJson(Map<String, dynamic> json) =>
+      _$CosinussDataFromJson(json);
+
+  Map<String, dynamic> toJson() => _$CosinussDataToJson(this);
 }

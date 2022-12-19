@@ -1,5 +1,9 @@
 import 'dart:math';
+import 'package:json_annotation/json_annotation.dart';
 
+part 'body_temperature.g.dart';
+
+@JsonSerializable()
 class BodyTemperature {
   final double value;
   final String unit = "°C";
@@ -20,4 +24,9 @@ class BodyTemperature {
 
   @override
   int get hashCode => value.hashCode;
+
+  factory BodyTemperature.fromJson(Map<String, dynamic> json) =>
+      _$BodyTemperatureFromJson(json);
+
+  Map<String, dynamic> toJson() => _$BodyTemperatureToJson(this);
 }

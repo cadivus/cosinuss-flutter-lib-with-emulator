@@ -1,3 +1,8 @@
+import 'package:json_annotation/json_annotation.dart';
+
+part 'accelerometer.g.dart';
+
+@JsonSerializable()
 class Accelerometer {
   final String unit = "<unknown unit>";
   final int x;
@@ -23,4 +28,9 @@ class Accelerometer {
 
   @override
   int get hashCode => toString().hashCode;
+
+  factory Accelerometer.fromJson(Map<String, dynamic> json) =>
+      _$AccelerometerFromJson(json);
+
+  Map<String, dynamic> toJson() => _$AccelerometerToJson(this);
 }

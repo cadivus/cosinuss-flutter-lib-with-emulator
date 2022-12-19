@@ -1,3 +1,8 @@
+import 'package:json_annotation/json_annotation.dart';
+
+part 'ppg_raw.g.dart';
+
+@JsonSerializable()
 class PPGRaw {
   final String unit = "<unknown unit>";
   final int ppgRed;
@@ -23,4 +28,9 @@ class PPGRaw {
 
   @override
   int get hashCode => toString().hashCode;
+
+  factory PPGRaw.fromJson(Map<String, dynamic> json) =>
+      _$PPGRawFromJson(json);
+
+  Map<String, dynamic> toJson() => _$PPGRawToJson(this);
 }
