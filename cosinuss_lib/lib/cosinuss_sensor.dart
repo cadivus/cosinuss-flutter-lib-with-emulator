@@ -22,6 +22,8 @@ class CosinussSensor {
   HeartRate? _heartRate;
   PPGRaw? _ppgRaw;
 
+  WebSocketChannel? _sendEmulatorLogChannel;
+
   static final CosinussSensor _singleton = CosinussSensor._internal();
 
   factory CosinussSensor() {
@@ -119,13 +121,31 @@ class CosinussSensor {
   }
 
   void sendCosinussData() {
-    _streamController.sink.add(CosinussData(
+    CosinussData newCosinussData = CosinussData(
       connected: _isConnected,
       accelerometer: _accelerometer,
       bodyTemperature: _bodyTemperature,
       heartRate: _heartRate,
       ppgRaw: _ppgRaw,
-    ));
+    );
+    _streamController.sink.add(newCosinussData);
+    if (!isCosinussEmulatorLogMode) {
+      return;
+    }
+
+    if (_sendEmulatorLogChannel == null) {
+      String host = cosinussEmulatorHost;
+      int port = cosinussEmulatorPort;
+      _sendEmulatorLogChannel = WebSocketChannel.connect(
+          Uri(scheme: "ws", host: host, port: port, path: "/websocket/"));
+
+      _sendEmulatorLogChannel?.stream.listen(null, onDone: () {
+        _sendEmulatorLogChannel = null;
+      });
+    }
+    Map<String, dynamic> jsonLog = newCosinussData.toJson();
+    jsonLog["timestamp"] = DateTime.now().millisecondsSinceEpoch;
+    _sendEmulatorLogChannel!.sink.add(jsonEncode(jsonLog));
   }
 
   void connect() {

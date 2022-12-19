@@ -4,6 +4,10 @@ bool get isCosinussEmulatorMode =>
     const bool.fromEnvironment("COSINUSS_EMULATOR_MODE", defaultValue: false) &&
     kDebugMode;
 
+bool get isCosinussEmulatorLogMode =>
+    const bool.fromEnvironment("COSINUSS_EMULATOR_LOG_MODE", defaultValue: false) &&
+        kDebugMode;
+
 String get cosinussEmulatorHost {
   const host = String.fromEnvironment("COSINUSS_EMULATOR_HOST",
       defaultValue: "localhost");
