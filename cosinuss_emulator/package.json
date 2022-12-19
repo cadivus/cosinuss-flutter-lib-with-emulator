@@ -1,0 +1,46 @@
+{
+  "name": "cosinuss-emulator",
+  "version": "1.0.0",
+  "description": "Create a websocket for getting emulated Cosinuss data",
+  "main": "index.js",
+  "scripts": {
+    "build": "cross-env NODE_ENV=production babel src -d build",
+    "start": "cross-env nodemon src/index.js",
+    "format": "npx eslint src --fix",
+    "lint": "npx eslint src"
+  },
+  "author": "Jonas Greifenhain",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "cross-env": "^7.0.3",
+    "mime-types": "^2.1.35",
+    "nodemon": "^2.0.20",
+    "ws": "^8.11.0"
+  },
+  "nodemonConfig": {
+    "execMap": {
+      "js": "babel-node"
+    }
+  },
+  "devDependencies": {
+    "@babel/eslint-parser": "^7.19.1",
+    "@babel/node": "^7.20.5",
+    "@babel/preset-env": "^7.20.2",
+    "@babel/preset-flow": "^7.18.6",
+    "eslint-config-google": "^0.14.0",
+    "eslint-config-prettier": "^8.5.0"
+  },
+  "babel": {
+    "presets": [
+      "@babel/preset-flow",
+      [
+        "@babel/preset-env",
+        {
+          "targets": {
+            "node": "current"
+          }
+        }
+      ]
+    ]
+  }
+}
