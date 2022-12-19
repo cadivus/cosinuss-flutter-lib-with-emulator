@@ -1,0 +1,97 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
+
+    <style type="text/css">@import url(style.css);</style>
+    <title>Cosinuss Emulator</title>
+
+    <script src="./js/navigation.js"></script>
+</head>
+
+<body>
+<div id="menu-mobile-bar">
+    <div id="menu-mobile-button-open-area">
+            <span id="burger">
+                <span class="line"></span>
+                <span class="line"></span>
+                <span class="line"></span>
+            </span>
+    </div>
+    <div id="menu-mobile-button-close-area">
+        <img src="./images/cross.svg" id="menu-mobile-close-button"/>
+    </div>
+</div>
+
+<div id="menu-mobile" style="padding-top: 45px;">
+    <ul>
+        <li onclick="openManualEmulator()">
+            <a id="manual-emulator-href-mobile" style="font-weight: bold; text-decoration:none;">
+                <div class="menu-mobile-title">
+                    <div style="display: table; height: 60px; overflow: hidden; vertical-align: middle; width: 100%">
+                        <div style="display: table-cell; width: 3%;"></div>
+                        <div style="display: table-cell; width: 90%;">
+                            Manual emulator
+                        </div>
+                        <div style="display: table-cell; width: 7%;">
+                            <img
+                                    src="./images/forward.svg"
+                                    class="forward-button" style="display: block"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </li>
+        <li onclick="openRecordAndReplay()">
+            <a id="record-and-replay-href-mobile" style="text-decoration:none;">
+                <div class="menu-mobile-title">
+                    <div style="display: table; height: 60px; overflow: hidden; vertical-align: middle; width: 100%">
+                        <div style="display: table-cell; width: 3%;"></div>
+                        <div style="display: table-cell; width: 90%;">
+                            Record and replay
+                        </div>
+                        <div style="display: table-cell; width: 7%;">
+                            <img
+                                    src="./images/forward.svg"
+                                    class="forward-button" style="display: block"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </li>
+    </ul>
+</div>
+
+<div id="wrapper">
+    <div style="text-align:center">
+        <div class="menu">
+            <ul id="nav" class="drop">
+                <li onclick="openManualEmulator()">
+                    <a id="manual-emulator-href" style="color: unset; padding: 13px 15px; font-weight: bold;">
+                        Manual emulator
+                    </a>
+                </li>
+                <li onclick="openRecordAndReplay()">
+                    <a id="record-and-replay-href" style="color: unset; padding: 13px 15px;">
+                        Record and replay
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div id="back-blur">
+            <div class='mid'>
+                <div class='content'>
+                    <br><br>
+                    <div id="manual-emulator" style="display: block;">
+                        Manual emulator
+                    </div>
+                    <div id="record-and-replay" style="display: none;">
+                        Record and Replay
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>

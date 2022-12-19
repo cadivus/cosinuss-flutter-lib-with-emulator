@@ -9,6 +9,7 @@ module.exports = {
   extends: ["eslint:recommended", "google", "prettier"],
   rules: {
     quotes: ["error", "double"],
+    "require-jsdoc" : 0,
   },
   parser: "@babel/eslint-parser",
   parserOptions: {
