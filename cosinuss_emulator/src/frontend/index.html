@@ -5,7 +5,9 @@
     <style type="text/css">@import url(style.css);</style>
     <title>Cosinuss Emulator</title>
 
+    <script src="./js/websocket.js"></script>
     <script src="./js/navigation.js"></script>
+    <script src="./js/manual_emulator.js"></script>
 </head>
 
 <body>
@@ -80,11 +82,60 @@
             </ul>
         </div>
         <div id="back-blur">
-            <div class='mid'>
-                <div class='content'>
+            <div class="mid">
+                <div class="content">
                     <br><br>
                     <div id="manual-emulator" style="display: block;">
-                        Manual emulator
+                        <div id="manual-emulator-heart-rate">
+                            <label>Heart rate:
+                                <input id="manual-emulator-heart-rate-input" type="range" min="0" max="180" value="60" style="width: 100%;">
+                            </label>
+                            <div class="current-value" id="manual-emulator-heart-rate-value">60</div>
+                        </div>
+
+                        <div class="manual-input-spacer"></div>
+
+                        <div id="manual-emulator-body-temperature">
+                            <label>Body temperature:
+                                <input id="manual-emulator-body-temperature-input" type="range" step="0.01" min="20" max="45" value="36.75" style="width: 100%;">
+                            </label>
+                            <div class="current-value" id="manual-emulator-body-temperature-value">37</div>
+                        </div>
+
+                        <div class="manual-input-spacer"></div>
+
+                        <div id="manual-emulator-accelerometer">
+                            Accelerometer (x | y | z):
+                            <input id="manual-emulator-accelerometer-input-x" type="range" min="-128" max="127" value="0" style="width: 100%;">
+                            <input id="manual-emulator-accelerometer-input-y" type="range" min="-128" max="127" value="0" style="width: 100%;">
+                            <input id="manual-emulator-accelerometer-input-z" type="range" min="-128" max="127" value="0" style="width: 100%;">
+                            <div class="current-value" id="manual-emulator-accelerometer-value">(0 | 1 | 2)</div>
+                        </div>
+
+                        <div class="manual-input-spacer"></div>
+
+                        <div id="manual-emulator-ppg-raw">
+                            PPG raw (red, green, ambient):
+                            <input id="manual-emulator-ppg-raw-input-red" type="range" min="0" max="16777215" value="0" style="width: 100%;">
+                            <input id="manual-emulator-ppg-raw-input-green" type="range" min="0" max="16777215" value="0" style="width: 100%;">
+                            <input id="manual-emulator-ppg-raw-input-ambient" type="range" min="0" max="16777215" value="0" style="width: 100%;">
+                            <div class="current-value" id="manual-emulator-ppg-raw-value">(0, 0, 0)</div>
+                        </div>
+
+                        <div class="manual-input-spacer"></div>
+
+                        <div style="display: grid; grid-template-columns: auto auto;">
+                            <div style="padding-top: 4px;">
+                                <label>
+                                    <input id="manual-emulator-auto-update-checkbox" type="checkbox" checked />
+                                    Auto update
+                                </label>
+                            </div>
+                            <div style="text-align: right;">
+                                <input id="manual-emulator-send-button" type="button" value="Send">
+                            </div>
+                        </div>
+
                     </div>
                     <div id="record-and-replay" style="display: none;">
                         Record and Replay
