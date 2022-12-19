@@ -1,12 +1,16 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:flutter/foundation.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'package:cosinuss_lib/data_model/accelerometer.dart';
 import 'package:cosinuss_lib/data_model/body_temperature.dart';
 import 'package:cosinuss_lib/data_model/cosinuss_data.dart';
 import 'package:cosinuss_lib/data_model/heart_rate.dart';
 import 'package:cosinuss_lib/data_model/ppg_raw.dart';
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'dart:typed_data';
+import 'package:cosinuss_lib/debug.dart';
 
 class CosinussSensor {
   bool _isConnected = false;
@@ -114,8 +118,8 @@ class CosinussSensor {
     return mantissa;
   }
 
-  void sendCosinussData(StreamSink<CosinussData> sink) {
-    sink.add(CosinussData(
+  void sendCosinussData() {
+    _streamController.sink.add(CosinussData(
       connected: _isConnected,
       accelerometer: _accelerometer,
       bodyTemperature: _bodyTemperature,
@@ -125,6 +129,52 @@ class CosinussSensor {
   }
 
   void connect() {
+    if (isCosinussEmulatorMode) {
+      emulatorConnect();
+      return;
+    }
+
+    _bluetoothConnect();
+  }
+
+  void emulatorConnect() {
+    if (_isConnected) {
+      return;
+    }
+
+    String host = cosinussEmulatorHost;
+    int port = cosinussEmulatorPort;
+
+    final channel = WebSocketChannel.connect(
+        Uri(scheme: "ws", host: host, port: port, path: "/websocket/"));
+
+    _isConnected = true;
+
+    channel.stream.listen((data) {
+      try {
+        Map<String, dynamic> jsonDecoded = jsonDecode(data.toString());
+        jsonDecoded["connected"] ??= true;
+        CosinussData update = CosinussData.fromJson(jsonDecoded);
+        _accelerometer = update.accelerometer;
+        _bodyTemperature = update.bodyTemperature;
+        _heartRate = update.heartRate;
+        _ppgRaw = update.ppgRaw;
+        sendCosinussData();
+      } catch (e) {
+        if (kDebugMode) {
+          print("Invalid JSON: $e");
+        }
+      }
+    }, onDone: () {
+      _isConnected = false;
+      sendCosinussData();
+      if (kDebugMode) {
+        print("End connection to Cosinuss emulator");
+      }
+    });
+  }
+
+  void _bluetoothConnect() {
     if (_isConnected) {
       return;
     }
@@ -136,7 +186,7 @@ class CosinussSensor {
         return;
       }
       _isConnected = false;
-      sendCosinussData(_streamController.sink);
+      sendCosinussData();
     });
 
     // start scanning
@@ -155,7 +205,7 @@ class CosinussSensor {
           r.device.state.listen((state) {
             // listen for connection state changes
             _isConnected = state == BluetoothDeviceState.connected;
-            sendCosinussData(_streamController.sink);
+            sendCosinussData();
           });
 
           await r.device.connect();
@@ -192,7 +242,7 @@ class CosinussSensor {
                   characteristic.value.listen((rawData) {
                     _accelerometer = _getAccelerometer(rawData);
                     _ppgRaw = _getPPGRaw(rawData);
-                    sendCosinussData(_streamController.sink);
+                    sendCosinussData();
                   });
                   await characteristic.setNotifyValue(true);
                   await Future.delayed(const Duration(seconds: 2));
@@ -201,7 +251,7 @@ class CosinussSensor {
                 case "00002a37-0000-1000-8000-00805f9b34fb":
                   characteristic.value.listen((rawData) {
                     _heartRate = _getHeartRate(rawData);
-                    sendCosinussData(_streamController.sink);
+                    sendCosinussData();
                   });
                   await characteristic.setNotifyValue(true);
                   await Future.delayed(const Duration(
@@ -212,7 +262,7 @@ class CosinussSensor {
                 case "00002a1c-0000-1000-8000-00805f9b34fb":
                   characteristic.value.listen((rawData) {
                     _bodyTemperature = _getBodyTemperature(rawData);
-                    sendCosinussData(_streamController.sink);
+                    sendCosinussData();
                   });
                   await characteristic.setNotifyValue(true);
                   await Future.delayed(const Duration(
