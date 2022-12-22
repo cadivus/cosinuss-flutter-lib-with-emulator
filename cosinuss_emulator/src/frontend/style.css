@@ -209,6 +209,11 @@ ul.drop li.hover, ul.drop li:hover:not(.asd) {
 
 @media screen
 and (max-width: 650px) {
+    .record-and-replay-button {
+        height: 30px;
+        width: 70px;
+    }
+
     .content {
         z-index: 5;
         display: inline-block;

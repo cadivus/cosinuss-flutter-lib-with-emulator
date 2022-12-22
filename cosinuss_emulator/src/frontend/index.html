@@ -2,13 +2,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
 
-    <style type="text/css">@import url(style.css);</style>
+    <style>@import url(style.css);</style>
     <title>Cosinuss Emulator</title>
 
     <script src="./js/websocket.js"></script>
     <script src="./js/navigation.js"></script>
     <script src="./js/ui_tools.js"></script>
     <script src="./js/manual_emulator.js"></script>
+    <script src="./js/record_and_replay.js"></script>
 </head>
 
 <body>
@@ -144,7 +145,6 @@
                                 <input id="manual-emulator-send-button" type="button" value="Send">
                             </div>
                         </div>
-
                     </div>
                     <div id="record-and-replay" style="display: none;">
                         <div style="display: grid; grid-template-columns: auto auto auto;">
@@ -153,7 +153,7 @@
                                        type="button" value="Record">
                             </div>
                             <div id="record-and-replay-recording-length" style="text-align: center;">
-                                00s
+                                no recording
                             </div>
                             <div style="text-align: right;">
                                 <input class="record-and-replay-button" id="record-and-replay-play-pause-button"
@@ -161,8 +161,35 @@
                             </div>
                         </div>
 
-
                         <div class="record-and-replay-spacer"></div>
+
+                        <label for="record-and-replay-recording-duration-input">
+                            Recording duration(min):
+                        </label>
+                        <div style="height: 5px;"></div>
+
+                        <div>
+                            <button type="button" class="record-and-replay-spinner-button-100"
+                                    id="record-and-replay-spinner-button-m100"
+                                    onclick='numberSpinnerAdd("record-and-replay-recording-duration-input", -100)'>-100
+                            </button>
+                            <button type="button" class="record-and-replay-spinner-button-10"
+                                    id="record-and-replay-spinner-button-m10"
+                                    onclick='numberSpinnerAdd("record-and-replay-recording-duration-input", -10)'>-10
+                            </button>
+                            <input type="number" class="record-and-replay-spinner"
+                                   id="record-and-replay-recording-duration-input" value="0" min="0" step="1">
+                            <button type="button" class="record-and-replay-spinner-button-10"
+                                    id="record-and-replay-spinner-button-p10"
+                                    onclick='numberSpinnerAdd("record-and-replay-recording-duration-input", 10)'>+10
+                            </button>
+                            <button type="button" class="record-and-replay-spinner-button-100"
+                                    id="record-and-replay-spinner-button-p100"
+                                    onclick='numberSpinnerAdd("record-and-replay-recording-duration-input", 100)'>+100
+                            </button>
+                        </div>
+
+                        <div class="manual-input-spacer"></div>
 
                         <label for="record-and-replay-sampling-rate-input">
                             Sampling rate (ms):
@@ -189,7 +216,8 @@
                         <div class="record-and-replay-spacer"></div>
 
                         <div>
-                            <input type="file" id="record-and-replay-load-input" style="display: none;"/>
+                            <input type="file" accept='text/plain' id="record-and-replay-load-input"
+                                   style="display: none;"/>
                             <button class="record-and-replay-button" id="record-and-replay-load-button"
                                     onclick="document.getElementById('record-and-replay-load-input').click();"
                                     type="button" value="Load">Load
