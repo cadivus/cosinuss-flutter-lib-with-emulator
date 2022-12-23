@@ -8,16 +8,57 @@ let recording = [];
 
 let replayingTimeout;
 let recordingAutostopTimeout;
+let progressBarInterval;
 
 function displayRecordingLength() {
   let result = "no recording";
 
   if (recording.length !== 0) {
     const time = (recording[recording.length - 1]["timestamp"] - recording[0]["timestamp"]) / 1000;
-    result = time + " s";
+    if (time <= 120) {
+      result = time + " s";
+    } else {
+      result = (time / 60).toFixed(2) + " min";
+    }
   }
 
   document.getElementById("record-and-replay-recording-length").innerText = result;
+}
+
+function showProgressBar() {
+  document.getElementById("record-and-replay-progress-bar").style.display = "block";
+  if (isRecording) {
+    const durationInput = document.getElementById("record-and-replay-recording-duration-input").value;
+    const timeoutMilliseconds = parseInt(durationInput) * 60000;
+
+    document.getElementById("record-and-replay-progress-bar").max = timeoutMilliseconds;
+    document.getElementById("record-and-replay-progress-bar").value = 0;
+    const startingPoint = Date.now();
+
+    progressBarInterval = setInterval(function () {
+      const newValue = Date.now() - startingPoint;
+      document.getElementById("record-and-replay-progress-bar").value = newValue;
+    }, 1000);
+  }
+
+  if (isReplaying) {
+    const maxValue = recording[recording.length - 1]["timestamp"] - recording[0]["timestamp"];
+    document.getElementById("record-and-replay-progress-bar").max = maxValue;
+
+    progressBarInterval = setInterval(function () {
+      const newValue = recording[replayingIndex]["timestamp"] - recording[0]["timestamp"];
+      document.getElementById("record-and-replay-progress-bar").value = newValue;
+    }, 1000);
+  }
+}
+
+function hideProgressBar() {
+  if (document.getElementById("record-and-replay-progress-bar").style.display === "none") {
+    return;
+  }
+
+  clearTimeout(progressBarInterval);
+  document.getElementById("record-and-replay-progress-bar").style.display = "none";
 }
 
 function downloadText(filename, text) {
@@ -82,17 +123,23 @@ function onSaveButtonPress() {
 }
 
 function setUiRecordingMode(active) {
+  let newLabel;
   if (active) {
     displayRecordingLength();
     document.getElementById("record-and-replay-play-pause-button").disabled = true;
     document.getElementById("record-and-replay-save-button").disabled = true;
     setRecordingDurationElementEnabled(false);
     newLabel = "Stop";
+    const durationInput = document.getElementById("record-and-replay-recording-duration-input").value;
+    if (parseInt(durationInput) !== 0) {
+      showProgressBar();
+    }
   } else {
     newLabel = "Record";
     document.getElementById("record-and-replay-play-pause-button").disabled = !(recording.length > 0);
     document.getElementById("record-and-replay-save-button").disabled = !(recording.length > 0);
     setRecordingDurationElementEnabled(true);
+    hideProgressBar();
   }
   document.getElementById("record-and-replay-record-button").value = newLabel;
 }
@@ -103,7 +150,11 @@ function onRecordButtonPress() {
 
   if (isRecording) {
     recording = [];
-    const timeoutMilliseconds = parseInt(document.getElementById("record-and-replay-recording-duration-input").value) * 60000;
+    const durationInput = document.getElementById("record-and-replay-recording-duration-input").value;
+    const timeoutMilliseconds = parseInt(durationInput) * 60000;
+    if (timeoutMilliseconds === 0) {
+      return;
+    }
     recordingAutostopTimeout = setTimeout(function () {
       isRecording = false;
       setUiRecordingMode(false);
@@ -114,16 +165,16 @@ function onRecordButtonPress() {
 }
 
 function setUiPlayingMode(active) {
-  isReplaying = active;
-
   let newLabel;
-  if (isReplaying) {
+  if (active) {
     document.getElementById("record-and-replay-record-button").disabled = true;
     document.getElementById("record-and-replay-load-button").disabled = true;
+    showProgressBar();
     newLabel = "Stop";
   } else {
     document.getElementById("record-and-replay-record-button").disabled = false;
     document.getElementById("record-and-replay-load-button").disabled = false;
+    hideProgressBar();
     newLabel = "Play";
   }
   document.getElementById("record-and-replay-play-pause-button").value = newLabel;

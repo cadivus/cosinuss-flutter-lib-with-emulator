@@ -1,9 +1,11 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
-
-    <style>@import url(style.css);</style>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
     <title>Cosinuss Emulator</title>
+
+    <link rel="stylesheet" href="style.css">
 
     <script src="./js/websocket.js"></script>
     <script src="./js/navigation.js"></script>
@@ -22,66 +24,74 @@
             </span>
     </div>
     <div id="menu-mobile-button-close-area">
-        <img src="./images/cross.svg" id="menu-mobile-close-button"/>
+        <img src="./images/cross.svg" id="menu-mobile-close-button" alt="&#10060;">
     </div>
 </div>
 
 <div id="menu-mobile" style="padding-top: 45px;">
-    <ul>
-        <li onclick="openManualEmulator()">
-            <a id="manual-emulator-href-mobile" style="font-weight: bold; text-decoration:none;">
-                <div class="menu-mobile-title">
-                    <div style="display: table; height: 60px; overflow: hidden; vertical-align: middle; width: 100%">
-                        <div style="display: table-cell; width: 3%;"></div>
-                        <div style="display: table-cell; width: 90%;">
-                            Manual emulator
-                        </div>
-                        <div style="display: table-cell; width: 7%;">
-                            <img
-                                    src="./images/forward.svg"
-                                    class="forward-button" style="display: block"
-                            />
-                        </div>
-                    </div>
-                </div>
-            </a>
-        </li>
-        <li onclick="openRecordAndReplay()">
-            <a id="record-and-replay-href-mobile" style="text-decoration:none;">
-                <div class="menu-mobile-title">
-                    <div style="display: table; height: 60px; overflow: hidden; vertical-align: middle; width: 100%">
-                        <div style="display: table-cell; width: 3%;"></div>
-                        <div style="display: table-cell; width: 90%;">
-                            Record and replay
-                        </div>
-                        <div style="display: table-cell; width: 7%;">
-                            <img
-                                    src="./images/forward.svg"
-                                    class="forward-button" style="display: block"
-                            />
+    <nav>
+        <ul>
+            <li onclick="openManualEmulator()">
+                <a id="manual-emulator-href-mobile" style="font-weight: bold; text-decoration:none;">
+                    <div class="menu-mobile-title">
+                        <div style="display: table; height: 60px; overflow: hidden; vertical-align: middle; width: 100%">
+                            <div style="display: table-cell; width: 3%;"></div>
+                            <div style="display: table-cell; width: 90%;">
+                                Manual emulator
+                            </div>
+                            <div style="display: table-cell; width: 7%;">
+                                <img
+                                        src="./images/forward.svg"
+                                        class="forward-button"
+                                        style="display: block"
+                                        alt="&rarr;"
+                                >
+                            </div>
                         </div>
                     </div>
-                </div>
-            </a>
-        </li>
-    </ul>
+                </a>
+            </li>
+            <li onclick="openRecordAndReplay()">
+                <a id="record-and-replay-href-mobile" style="text-decoration:none;">
+                    <div class="menu-mobile-title">
+                        <div style="display: table; height: 60px; overflow: hidden; vertical-align: middle; width: 100%">
+                            <div style="display: table-cell; width: 3%;"></div>
+                            <div style="display: table-cell; width: 90%;">
+                                Record and replay
+                            </div>
+                            <div style="display: table-cell; width: 7%;">
+                                <img
+                                        src="./images/forward.svg"
+                                        class="forward-button"
+                                        style="display: block"
+                                        alt="&rarr;"
+                                >
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </li>
+        </ul>
+    </nav>
 </div>
 
 <div id="wrapper">
     <div style="text-align:center">
         <div class="menu">
-            <ul id="nav" class="drop">
-                <li onclick="openManualEmulator()">
-                    <a id="manual-emulator-href" style="color: unset; padding: 13px 15px; font-weight: bold;">
-                        Manual emulator
-                    </a>
-                </li>
-                <li onclick="openRecordAndReplay()">
-                    <a id="record-and-replay-href" style="color: unset; padding: 13px 15px;">
-                        Record and replay
-                    </a>
-                </li>
-            </ul>
+            <nav>
+                <ul id="nav" class="drop">
+                    <li onclick="openManualEmulator()">
+                        <a id="manual-emulator-href" style="color: unset; padding: 13px 15px; font-weight: bold;">
+                            Manual emulator
+                        </a>
+                    </li>
+                    <li onclick="openRecordAndReplay()">
+                        <a id="record-and-replay-href" style="color: unset; padding: 13px 15px;">
+                            Record and replay
+                        </a>
+                    </li>
+                </ul>
+            </nav>
         </div>
         <div id="back-blur">
             <div class="mid">
@@ -137,7 +147,7 @@
                         <div style="display: grid; grid-template-columns: auto auto;">
                             <div style="padding-top: 4px;">
                                 <label>
-                                    <input id="manual-emulator-auto-update-checkbox" type="checkbox" checked/>
+                                    <input id="manual-emulator-auto-update-checkbox" type="checkbox" checked>
                                     Auto update
                                 </label>
                             </div>
@@ -152,13 +162,18 @@
                                 <input class="record-and-replay-button" id="record-and-replay-record-button"
                                        type="button" value="Record">
                             </div>
-                            <div id="record-and-replay-recording-length" style="text-align: center;">
+                            <div id="record-and-replay-recording-length" style="text-align: center; padding-top: 5px;">
                                 no recording
                             </div>
                             <div style="text-align: right;">
                                 <input class="record-and-replay-button" id="record-and-replay-play-pause-button"
                                        type="button" value="Play">
                             </div>
+                        </div>
+                        <div style="height: 10px;"></div>
+                        <div style="height: 20px;">
+                            <progress id="record-and-replay-progress-bar" value="99" max="100"
+                                      style="width: 100%; display: none;"></progress>
                         </div>
 
                         <div class="record-and-replay-spacer"></div>
@@ -171,21 +186,25 @@
                         <div>
                             <button type="button" class="record-and-replay-spinner-button-100"
                                     id="record-and-replay-spinner-button-m100"
-                                    onclick='numberSpinnerAdd("record-and-replay-recording-duration-input", -100)'>-100
+                                    onclick='numberSpinnerAdd("record-and-replay-recording-duration-input", -100)'>
+                                &minus;100
                             </button>
                             <button type="button" class="record-and-replay-spinner-button-10"
                                     id="record-and-replay-spinner-button-m10"
-                                    onclick='numberSpinnerAdd("record-and-replay-recording-duration-input", -10)'>-10
+                                    onclick='numberSpinnerAdd("record-and-replay-recording-duration-input", -10)'>
+                                &minus;10
                             </button>
                             <input type="number" class="record-and-replay-spinner"
                                    id="record-and-replay-recording-duration-input" value="0" min="0" step="1">
                             <button type="button" class="record-and-replay-spinner-button-10"
                                     id="record-and-replay-spinner-button-p10"
-                                    onclick='numberSpinnerAdd("record-and-replay-recording-duration-input", 10)'>+10
+                                    onclick='numberSpinnerAdd("record-and-replay-recording-duration-input", 10)'>
+                                &plus;10
                             </button>
                             <button type="button" class="record-and-replay-spinner-button-100"
                                     id="record-and-replay-spinner-button-p100"
-                                    onclick='numberSpinnerAdd("record-and-replay-recording-duration-input", 100)'>+100
+                                    onclick='numberSpinnerAdd("record-and-replay-recording-duration-input", 100)'>
+                                &plus;100
                             </button>
                         </div>
 
@@ -217,7 +236,7 @@
 
                         <div>
                             <input type="file" accept='text/plain' id="record-and-replay-load-input"
-                                   style="display: none;"/>
+                                   style="display: none;">
                             <button class="record-and-replay-button" id="record-and-replay-load-button"
                                     onclick="document.getElementById('record-and-replay-load-input').click();"
                                     type="button" value="Load">Load
@@ -233,3 +252,4 @@
     </div>
 </div>
 </body>
+</html>
