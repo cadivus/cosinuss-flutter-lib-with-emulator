@@ -1,4 +1,5 @@
 import 'package:cosinuss_lib/cosinuss_sensor.dart';
+import 'package:cosinuss_lib/data_model/cosinuss_connecting_result.dart';
 import 'package:cosinuss_lib/data_model/cosinuss_data.dart';
 import 'package:flutter/material.dart';
 
@@ -34,6 +35,13 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   bool _connected = false;
 
+  final Map<CosinussConnectingResult, String> _resultMessages = {
+    CosinussConnectingResult.sensorNotFound: "Cosinuss Sensor not found",
+    CosinussConnectingResult.bluetoothNotAvailable:
+        "Bluetooth not available on this device",
+    CosinussConnectingResult.bluetoothOff: "Bluetooth is turned off",
+  };
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,11 +54,13 @@ class _MyHomePageState extends State<MyHomePage> {
           child: StreamBuilder<CosinussData>(
             stream: CosinussSensor.instance.stream,
             builder: (
-                BuildContext context,
-                AsyncSnapshot<CosinussData> snapshot,
-                ) {
+              BuildContext context,
+              AsyncSnapshot<CosinussData> snapshot,
+            ) {
               if (!snapshot.hasData) {
-                return _connected ? const CircularProgressIndicator() : const Text("Disconnected");
+                return _connected
+                    ? const CircularProgressIndicator()
+                    : const Text("Disconnected");
               }
 
               _connected = snapshot.data!.connected;
@@ -62,7 +72,9 @@ class _MyHomePageState extends State<MyHomePage> {
                     const Text(
                       'Status: ',
                     ),
-                    Text(CosinussSensor.instance.isConnected ? "Connected" : "Disconnected"),
+                    Text(CosinussSensor.instance.isConnected
+                        ? "Connected"
+                        : "Disconnected"),
                   ]),
                   Row(children: [
                     const Text('Heart Rate: '),
@@ -113,8 +125,31 @@ class _MyHomePageState extends State<MyHomePage> {
       floatingActionButton: Visibility(
         visible: !CosinussSensor.instance.isConnected,
         child: FloatingActionButton(
-          onPressed: () {
-            CosinussSensor.instance.connect();
+          onPressed: () async {
+            CosinussConnectingResult result =
+                await CosinussSensor.instance.connect();
+
+            if (result == CosinussConnectingResult.success) {
+              return;
+            }
+
+            showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: const Text("Error connecting to Cosinuss"),
+                    content: Text(_resultMessages[result] ?? "Unknown error"),
+                    actions: <Widget>[
+                      // usually buttons at the bottom of the dialog
+                      TextButton(
+                        child: const Text("Okay"),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  );
+                });
           },
           tooltip: 'Connect',
           child: const Icon(Icons.bluetooth_searching_sharp),
