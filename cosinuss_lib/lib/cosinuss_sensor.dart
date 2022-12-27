@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:collection/collection.dart';
 
 import 'package:cosinuss_lib/data_model/accelerometer.dart';
 import 'package:cosinuss_lib/data_model/body_temperature.dart';
@@ -12,7 +13,12 @@ import 'package:cosinuss_lib/data_model/heart_rate.dart';
 import 'package:cosinuss_lib/data_model/ppg_raw.dart';
 import 'package:cosinuss_lib/debug.dart';
 
+import 'data_model/cosinuss_connecting_result.dart';
+
 class CosinussSensor {
+  // Timeout for connecting to the sensor
+  final int _bluetoothScanTimeoutSeconds = 3;
+
   BluetoothDevice? _earConnect;
   bool _isConnected = false;
 
@@ -22,6 +28,25 @@ class CosinussSensor {
   PPGRaw? _ppgRaw;
 
   WebSocketChannel? _sendEmulatorLogChannel;
+
+  final List<int> _sensorBluetoothCharacteristics = [
+    0x32,
+    0x31,
+    0x39,
+    0x32,
+    0x37,
+    0x34,
+    0x31,
+    0x30,
+    0x35,
+    0x39,
+    0x35,
+    0x35,
+    0x30,
+    0x32,
+    0x34,
+    0x35
+  ];
 
   static final CosinussSensor _singleton = CosinussSensor._internal();
 
@@ -147,20 +172,15 @@ class CosinussSensor {
     _sendEmulatorLogChannel!.sink.add(jsonEncode(jsonLog));
   }
 
-  void connect() {
+  Future<CosinussConnectingResult> connect() {
     if (isCosinussEmulatorMode) {
-      emulatorConnect();
-      return;
+      return _emulatorConnect();
     }
 
-    _bluetoothConnect();
+    return _bluetoothConnect();
   }
 
-  void emulatorConnect() {
-    if (_isConnected) {
-      return;
-    }
-
+  Future<CosinussConnectingResult> _emulatorConnect() async {
     String host = cosinussEmulatorHost;
     int port = cosinussEmulatorPort;
 
@@ -191,19 +211,28 @@ class CosinussSensor {
         print("End connection to Cosinuss emulator");
       }
     });
+
+    return CosinussConnectingResult.success;
   }
 
-  void _disconnectBluetooth() {
+  Future<void> _disconnectBluetooth() async {
     FlutterBluePlus flutterBluePlus = FlutterBluePlus.instance;
-    flutterBluePlus.stopScan();
+    await flutterBluePlus.stopScan();
     _isConnected = false;
     _earConnect?.disconnect();
     _earConnect = null;
     sendCosinussData();
   }
 
-  void _bluetoothConnect() async {
+  Future<CosinussConnectingResult> _bluetoothConnect() async {
     FlutterBluePlus flutterBluePlus = FlutterBluePlus.instance;
+
+    if (!(await flutterBluePlus.isAvailable)) {
+      return CosinussConnectingResult.bluetoothNotAvailable;
+    }
+    if (!(await flutterBluePlus.isOn)) {
+      return CosinussConnectingResult.bluetoothOff;
+    }
 
     flutterBluePlus.state.listen((event) {
       if (![BluetoothState.off, BluetoothState.unavailable].contains(event)) {
@@ -214,98 +243,96 @@ class CosinussSensor {
 
     // disconnect if already connected
     _disconnectBluetooth();
-
     // start scanning
     flutterBluePlus.startScan(timeout: const Duration(seconds: 4));
 
-    // listen to scan results
+    Completer<CosinussConnectingResult> resultCompleter = Completer();
+
+    // Timeout for connecting to Cosinuss
+    Timer(Duration(seconds: _bluetoothScanTimeoutSeconds), () {
+      if (resultCompleter.isCompleted) {
+        return;
+      }
+      _disconnectBluetooth();
+      resultCompleter.complete(CosinussConnectingResult.sensorNotFound);
+    });
+
+    // Get first scan result for avoiding endless searching
     flutterBluePlus.scanResults.listen((results) async {
-      // do something with scan results
-      for (ScanResult r in results) {
-        if (r.device.name != "earconnect" || _earConnect != null) {
-          continue;
-        }
+      ScanResult? earconnectResult =
+          results.firstWhereOrNull((r) => r.device.name == "earconnect");
 
-        // avoid multiple connects attempts to same device
-        _earConnect = r.device;
+      if (earconnectResult == null || resultCompleter.isCompleted) {
+        return;
+      }
 
-        await flutterBluePlus.stopScan();
+      // avoid multiple connects attempts to same device
+      _earConnect = earconnectResult.device;
+      await flutterBluePlus.stopScan();
+      await earconnectResult.device.connect();
 
-        r.device.state.listen((state) {
-          // listen for connection state changes
-          _isConnected = state == BluetoothDeviceState.connected;
-          sendCosinussData();
-        });
+      resultCompleter.complete(CosinussConnectingResult.success);
 
-        _earConnect = r.device;
-        await r.device.connect();
+      earconnectResult.device.state.listen((state) {
+        // listen for connection state changes
+        _isConnected = state == BluetoothDeviceState.connected;
+        sendCosinussData();
+      });
 
-        List<BluetoothService> services = await r.device.discoverServices();
+      List<BluetoothService> services =
+          await earconnectResult.device.discoverServices();
 
-        for (var service in services) {
-          // iterate over services
-          for (var characteristic in service.characteristics) {
-            // iterate over characterstics
-            switch (characteristic.uuid.toString()) {
-              case "0000a001-1212-efde-1523-785feabcd123":
-                await characteristic.write([
-                  0x32,
-                  0x31,
-                  0x39,
-                  0x32,
-                  0x37,
-                  0x34,
-                  0x31,
-                  0x30,
-                  0x35,
-                  0x39,
-                  0x35,
-                  0x35,
-                  0x30,
-                  0x32,
-                  0x34,
-                  0x35
-                ]);
-                await Future.delayed(const Duration(
-                    seconds:
-                        2)); // short delay before next bluetooth operation otherwise BLE crashes
-                characteristic.value.listen((rawData) {
-                  _accelerometer = _getAccelerometer(rawData);
-                  _ppgRaw = _getPPGRaw(rawData);
-                  _isConnected = true;
-                  sendCosinussData();
-                });
-                await characteristic.setNotifyValue(true);
-                await Future.delayed(const Duration(seconds: 2));
-                break;
+      _connectBluetoothSensorService(services);
+    });
+    return resultCompleter.future;
+  }
 
-              case "00002a37-0000-1000-8000-00805f9b34fb":
-                characteristic.value.listen((rawData) {
-                  _heartRate = _getHeartRate(rawData);
-                  _isConnected = true;
-                  sendCosinussData();
-                });
-                await characteristic.setNotifyValue(true);
-                await Future.delayed(const Duration(
-                    seconds:
-                        2)); // short delay before next bluetooth operation otherwise BLE crashes
-                break;
+  void _connectBluetoothSensorService(List<BluetoothService> services) async {
+    for (BluetoothService service in services) {
+      // iterate over services
+      for (BluetoothCharacteristic characteristic in service.characteristics) {
+        // iterate over characterstics
+        switch (characteristic.uuid.toString()) {
+          case "0000a001-1212-efde-1523-785feabcd123":
+            await characteristic.write(_sensorBluetoothCharacteristics);
+            await Future.delayed(const Duration(
+                seconds:
+                2)); // short delay before next bluetooth operation otherwise BLE crashes
+            characteristic.value.listen((rawData) {
+              _accelerometer = _getAccelerometer(rawData);
+              _ppgRaw = _getPPGRaw(rawData);
+              _isConnected = true;
+              sendCosinussData();
+            });
+            await characteristic.setNotifyValue(true);
+            await Future.delayed(const Duration(seconds: 2));
+            break;
 
-              case "00002a1c-0000-1000-8000-00805f9b34fb":
-                characteristic.value.listen((rawData) {
-                  _bodyTemperature = _getBodyTemperature(rawData);
-                  _isConnected = true;
-                  sendCosinussData();
-                });
-                await characteristic.setNotifyValue(true);
-                await Future.delayed(const Duration(
-                    seconds:
-                        2)); // short delay before next bluetooth operation otherwise BLE crashes
-                break;
-            }
-          }
+          case "00002a37-0000-1000-8000-00805f9b34fb":
+            characteristic.value.listen((rawData) {
+              _heartRate = _getHeartRate(rawData);
+              _isConnected = true;
+              sendCosinussData();
+            });
+            await characteristic.setNotifyValue(true);
+            await Future.delayed(const Duration(
+                seconds:
+                2)); // short delay before next bluetooth operation otherwise BLE crashes
+            break;
+
+          case "00002a1c-0000-1000-8000-00805f9b34fb":
+            characteristic.value.listen((rawData) {
+              _bodyTemperature = _getBodyTemperature(rawData);
+              _isConnected = true;
+              sendCosinussData();
+            });
+            await characteristic.setNotifyValue(true);
+            await Future.delayed(const Duration(
+                seconds:
+                2)); // short delay before next bluetooth operation otherwise BLE crashes
+            break;
         }
       }
-    });
+    }
   }
 }
