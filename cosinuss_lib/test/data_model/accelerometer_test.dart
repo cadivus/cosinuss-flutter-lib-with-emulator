@@ -105,4 +105,12 @@ void main() {
     expect(675, json['y']);
     expect(435, json['z']);
   });
+
+  test('getByAxis(Axis)', () {
+    Accelerometer accelerometer = Accelerometer(x: -13, y: 675, z: 435);
+
+    expect(-13, accelerometer.getByAxis(Axis.x));
+    expect(675, accelerometer.getByAxis(Axis.y));
+    expect(435, accelerometer.getByAxis(Axis.z));
+  });
 }

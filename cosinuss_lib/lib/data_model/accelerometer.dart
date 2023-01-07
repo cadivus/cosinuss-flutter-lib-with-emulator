@@ -33,4 +33,21 @@ class Accelerometer {
       _$AccelerometerFromJson(json);
 
   Map<String, dynamic> toJson() => _$AccelerometerToJson(this);
+
+  int getByAxis(Axis axis) {
+    switch(axis) {
+      case Axis.x:
+        return x;
+      case Axis.y:
+        return y;
+      default:
+        return z;
+    }
+  }
+}
+
+enum Axis {
+  x,
+  y,
+  z
 }
