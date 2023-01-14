@@ -188,6 +188,8 @@ class CosinussSensor {
         Uri(scheme: "ws", host: host, port: port, path: "/websocket/"));
 
     _isConnected = true;
+    // Using the emulator, you won't directly get data triggering the stream
+    sendCosinussData();
 
     channel.stream.listen((data) {
       try {
