@@ -6,6 +6,7 @@
     <title>Cosinuss Emulator</title>
 
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css">
 
     <script src="./js/websocket.js"></script>
     <script src="./js/navigation.js"></script>
@@ -159,15 +160,17 @@
                     <div id="record-and-replay" style="display: none;">
                         <div style="display: grid; grid-template-columns: auto auto auto;">
                             <div>
-                                <input class="record-and-replay-button" id="record-and-replay-record-button"
-                                       type="button" value="Record">
+                                <button type="button" class="record-and-replay-button" id="record-and-replay-record-button">
+                                    <i class="fa-solid fa-record-vinyl"></i> Record
+                                </button>
                             </div>
                             <div id="record-and-replay-recording-length" style="text-align: center; padding-top: 5px;">
                                 no recording
                             </div>
                             <div style="text-align: right;">
-                                <input class="record-and-replay-button" id="record-and-replay-play-pause-button"
-                                       type="button" value="Play">
+                                <button type="button" class="record-and-replay-button" id="record-and-replay-play-pause-button">
+                                    <i class="fa fa-play"></i> Play
+                                </button>
                             </div>
                         </div>
                         <div style="height: 10px;"></div>
@@ -239,10 +242,10 @@
                                    style="display: none;">
                             <button class="record-and-replay-button" id="record-and-replay-load-button"
                                     onclick="document.getElementById('record-and-replay-load-input').click();"
-                                    type="button" value="Load">Load
+                                    type="button" value="Load"><i class="fa fa-upload"></i> Load
                             </button>
                             <button class="record-and-replay-button" id="record-and-replay-save-button" type="button"
-                                    value="Load">Save
+                                    value="Load"><i class="fa fa-download"></i> Save
                             </button>
                         </div>
                     </div>

@@ -129,19 +129,21 @@ function setUiRecordingMode(active) {
     document.getElementById("record-and-replay-play-pause-button").disabled = true;
     document.getElementById("record-and-replay-save-button").disabled = true;
     setRecordingDurationElementEnabled(false);
-    newLabel = "Stop";
+    // eslint-disable-next-line
+    newLabel = '<i class="fa fa-stop"></i> Stop';
     const durationInput = document.getElementById("record-and-replay-recording-duration-input").value;
     if (parseInt(durationInput) !== 0) {
       showProgressBar();
     }
   } else {
-    newLabel = "Record";
+    // eslint-disable-next-line
+    newLabel = '<i class="fa fa-record-vinyl"></i> Record';
     document.getElementById("record-and-replay-play-pause-button").disabled = !(recording.length > 0);
     document.getElementById("record-and-replay-save-button").disabled = !(recording.length > 0);
     setRecordingDurationElementEnabled(true);
     hideProgressBar();
   }
-  document.getElementById("record-and-replay-record-button").value = newLabel;
+  document.getElementById("record-and-replay-record-button").innerHTML = newLabel;
 }
 
 function onRecordButtonPress() {
@@ -170,14 +172,16 @@ function setUiPlayingMode(active) {
     document.getElementById("record-and-replay-record-button").disabled = true;
     document.getElementById("record-and-replay-load-button").disabled = true;
     showProgressBar();
-    newLabel = "Stop";
+    // eslint-disable-next-line
+    newLabel = '<i class="fa fa-stop"></i> Stop';
   } else {
     document.getElementById("record-and-replay-record-button").disabled = false;
     document.getElementById("record-and-replay-load-button").disabled = false;
     hideProgressBar();
-    newLabel = "Play";
+    // eslint-disable-next-line
+    newLabel = '<i class="fa fa-play"></i> Play';
   }
-  document.getElementById("record-and-replay-play-pause-button").value = newLabel;
+  document.getElementById("record-and-replay-play-pause-button").innerHTML = newLabel;
 }
 
 function onPlayPauseButtonPress() {
